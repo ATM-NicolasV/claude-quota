@@ -63,5 +63,51 @@ class TestReadToken(unittest.TestCase):
             read_token(path)
 
 
+from unittest import mock
+import io
+import urllib.error
+
+
+class _FakeResp(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        self.close()
+
+
+class TestFetch(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        _json.dump({"claudeAiOauth": {"accessToken": "sk-ant-oat01-x"}}, tmp)
+        tmp.close()
+        self.creds = Path(tmp.name)
+
+    def test_fetch_success(self):
+        from usage_client import fetch
+        body = _json.dumps(NOMINAL).encode("utf-8")
+        with mock.patch("usage_client.urllib.request.urlopen", return_value=_FakeResp(body)):
+            u = fetch(self.creds)
+        self.assertEqual(u.five_hour_pct, 51.0)
+        self.assertEqual(u.seven_day_pct, 23.0)
+
+    def test_fetch_401_raises_auth_error(self):
+        from usage_client import fetch, AuthError
+        err = urllib.error.HTTPError(USAGE_URL, 401, "Unauthorized", {}, None)
+        with mock.patch("usage_client.urllib.request.urlopen", side_effect=err):
+            with self.assertRaises(AuthError):
+                fetch(self.creds)
+
+    def test_fetch_network_failure_raises_network_error(self):
+        from usage_client import fetch, NetworkError
+        err = urllib.error.URLError("connection refused")
+        with mock.patch("usage_client.urllib.request.urlopen", side_effect=err):
+            with self.assertRaises(NetworkError):
+                fetch(self.creds)
+
+
+from usage_client import USAGE_URL  # noqa: E402  (used by TestFetch)
+
+
 if __name__ == "__main__":
     unittest.main()

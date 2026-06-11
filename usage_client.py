@@ -85,3 +85,32 @@ def parse_usage(data: dict, *, fetched_at: datetime) -> Usage:
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise NetworkError(f"unexpected response shape: {exc}") from exc
+
+
+def fetch(credentials_path: Path = CREDENTIALS_PATH) -> Usage:
+    """Read the token, call the usage endpoint, return a parsed Usage.
+
+    Raises CredentialsError, AuthError, or NetworkError on failure.
+    """
+    token = read_token(credentials_path)
+    request = urllib.request.Request(
+        USAGE_URL,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "anthropic-beta": BETA_HEADER,
+            "User-Agent": USER_AGENT,
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            raise AuthError("token rejected (401)") from exc
+        raise NetworkError(f"HTTP {exc.code}") from exc
+    except urllib.error.URLError as exc:
+        raise NetworkError(f"network failure: {exc.reason}") from exc
+    except (TimeoutError, OSError) as exc:
+        raise NetworkError(f"request failed: {exc}") from exc
+    return parse_usage(payload, fetched_at=datetime.now(timezone.utc))
