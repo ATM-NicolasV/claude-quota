@@ -161,4 +161,14 @@ identifiers, and logs are in English.
 - No OAuth refresh implementation (rely on Claude Code's credentials file).
 - No historical graphs / persistence.
 - No config GUI (env var is enough).
-- No packaging beyond the autostart `.desktop` (no .deb / pip package for now).
+- No pip / PyPI package.
+
+## Addendum (2026-06-11): .deb packaging
+
+Added after the initial build. A `.deb` is produced by `build-deb.sh` using only
+`dpkg-deb` (no debhelper/fpm build dependency). It installs the modules under
+`/usr/lib/claude-usage-indicator/`, a `/usr/bin/claude-usage-indicator` launcher,
+and a system-wide autostart entry in `/etc/xdg/autostart/`, declaring runtime
+dependencies (`python3-gi`, `gir1.2-gtk-3.0`, `gir1.2-ayatanaappindicator3-0.1`).
+Each user reads their own `~/.claude/.credentials.json` at runtime. See README for
+build/install commands.

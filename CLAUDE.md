@@ -9,6 +9,8 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
 - `formatting.py` — pure presentation helpers (label, menu lines). No GTK, no IO.
 - `indicator.py` — GTK/AyatanaAppIndicator3 tray wiring + GLib refresh timer (threaded fetch).
 - `main.py` — entry point: config (`CLAUDE_USAGE_INTERVAL`), wiring, signal handling.
+- `install.sh` — per-user autostart install (copies the `.desktop` to `~/.config/autostart`).
+- `build-deb.sh` — assemble and build the `.deb` (system install + `/etc/xdg/autostart`).
 
 ## Conventions
 - Python 3, stdlib only at runtime except PyGObject. Tests use stdlib `unittest`.
@@ -18,7 +20,8 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
 ## Commands
 - Run: `python3 main.py`
 - Tests: `python3 -m unittest discover -s tests -v`
-- Autostart: `./install.sh`
+- Autostart (from source): `./install.sh`
+- Build .deb: `./build-deb.sh [version]` (uses only `dpkg-deb`; output is gitignored)
 
 ## Notes
 - The usage endpoint is undocumented and may change without notice; the app degrades
