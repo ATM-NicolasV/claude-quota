@@ -38,5 +38,39 @@ class TestFormatLabel(unittest.TestCase):
         self.assertIn("23%", label)
 
 
+from formatting import humanize_delta, format_menu_lines, MenuText  # noqa: E402
+from datetime import timedelta  # noqa: E402
+
+
+class TestHumanizeDelta(unittest.TestCase):
+    def setUp(self):
+        self.now = datetime(2026, 6, 11, 7, 0, tzinfo=timezone.utc)
+
+    def test_future_hours_and_minutes(self):
+        target = self.now + timedelta(hours=2, minutes=47)
+        self.assertEqual(humanize_delta(target, self.now), "dans 2 h 47")
+
+    def test_future_minutes_only(self):
+        target = self.now + timedelta(minutes=12)
+        self.assertEqual(humanize_delta(target, self.now), "dans 12 min")
+
+    def test_past_or_now(self):
+        target = self.now - timedelta(minutes=1)
+        self.assertEqual(humanize_delta(target, self.now), "maintenant")
+
+
+class TestFormatMenuLines(unittest.TestCase):
+    def setUp(self):
+        self.now = datetime(2026, 6, 11, 7, 0, tzinfo=timezone.utc)
+
+    def test_lines_contain_percentages(self):
+        m = format_menu_lines(make_usage(five=51.0, seven=23.0, sonnet=2.0, opus=None), self.now)
+        self.assertIsInstance(m, MenuText)
+        self.assertIn("51", m.five_hour)
+        self.assertIn("23", m.seven_day)
+        self.assertIn("2", m.sonnet)
+        self.assertIn("—", m.opus)  # null opus shows an em dash
+
+
 if __name__ == "__main__":
     unittest.main()
