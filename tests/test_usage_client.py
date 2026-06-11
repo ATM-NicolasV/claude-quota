@@ -35,5 +35,33 @@ class TestParseUsage(unittest.TestCase):
         self.assertIsNone(u.opus_pct)
 
 
+import json as _json
+import tempfile
+
+
+class TestReadToken(unittest.TestCase):
+    def _write_creds(self, payload: dict) -> Path:
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        _json.dump(payload, tmp)
+        tmp.close()
+        return Path(tmp.name)
+
+    def test_reads_access_token(self):
+        from usage_client import read_token
+        path = self._write_creds({"claudeAiOauth": {"accessToken": "sk-ant-oat01-x"}})
+        self.assertEqual(read_token(path), "sk-ant-oat01-x")
+
+    def test_missing_file_raises_credentials_error(self):
+        from usage_client import read_token, CredentialsError
+        with self.assertRaises(CredentialsError):
+            read_token(Path("/nonexistent/creds.json"))
+
+    def test_missing_key_raises_credentials_error(self):
+        from usage_client import read_token, CredentialsError
+        path = self._write_creds({"claudeAiOauth": {}})
+        with self.assertRaises(CredentialsError):
+            read_token(path)
+
+
 if __name__ == "__main__":
     unittest.main()

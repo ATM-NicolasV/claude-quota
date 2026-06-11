@@ -47,6 +47,16 @@ class Usage:
     fetched_at: datetime
 
 
+def read_token(credentials_path: Path = CREDENTIALS_PATH) -> str:
+    """Return the Claude OAuth access token from the local credentials file."""
+    try:
+        with open(credentials_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        return data["claudeAiOauth"]["accessToken"]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError, TypeError) as exc:
+        raise CredentialsError(f"cannot read Claude credentials: {exc}") from exc
+
+
 def _section_pct(data: dict, key: str) -> Optional[float]:
     section = data.get(key)
     if not section:
