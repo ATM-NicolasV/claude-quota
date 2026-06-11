@@ -4,16 +4,35 @@ from __future__ import annotations
 import logging
 import os
 import signal
-
-import gi
-
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib  # noqa: E402
-
-from indicator import Indicator  # noqa: E402
-from usage_client import fetch  # noqa: E402
+import sys
 
 DEFAULT_INTERVAL = 60
+
+DEPENDENCY_HINT = (
+    "Missing GTK / AppIndicator bindings (PyGObject + typelibs).\n"
+    "Install them with:\n"
+    "    sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1\n"
+    "If you installed the .deb with 'dpkg -i', run 'sudo apt -f install' afterwards "
+    "to pull missing dependencies (or install with 'sudo apt install ./<file>.deb')."
+)
+
+
+def _check_gtk_dependencies() -> None:
+    """Fail early with an actionable message if the GTK bindings are absent.
+
+    Covers both a missing python3-gi (ImportError on `import gi`) and missing
+    GObject-Introspection typelibs (ValueError on require_version / ImportError
+    on the repository import).
+    """
+    try:
+        import gi
+
+        gi.require_version("Gtk", "3.0")
+        gi.require_version("AyatanaAppIndicator3", "0.1")
+        from gi.repository import Gtk, GLib, AyatanaAppIndicator3  # noqa: F401
+    except (ImportError, ValueError) as exc:
+        sys.stderr.write(f"{DEPENDENCY_HINT}\n\nDetails: {exc}\n")
+        raise SystemExit(1)
 
 
 def _read_interval() -> int:
@@ -30,6 +49,14 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    _check_gtk_dependencies()
+
+    # Imported lazily so the dependency check above can report a friendly
+    # message before any GTK import would raise a raw traceback.
+    from gi.repository import Gtk, GLib
+    from indicator import Indicator
+    from usage_client import fetch
+
     interval = _read_interval()
     indicator = Indicator(fetch=fetch, interval=interval)
     indicator.start()
