@@ -27,3 +27,8 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
 - The usage endpoint is undocumented and may change without notice; the app degrades
   gracefully (auth / offline states) rather than crashing.
 - Token refresh is owned by Claude Code; we only read the credentials file.
+- `main.py` runs `_check_gtk_dependencies()` before importing GTK, so a missing
+  `python3-gi` or AppIndicator typelib prints an actionable `apt install` hint and
+  exits cleanly instead of a raw traceback. GTK imports are therefore lazy (inside
+  `main()`), which also keeps `import main` GTK-free for tests.
+- Install the `.deb` with `apt install ./pkg.deb` (resolves deps), not `dpkg -i`.
