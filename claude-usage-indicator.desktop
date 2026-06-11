@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Claude Usage Indicator
+Comment=Live Claude Code quota in the top bar
+Exec=python3 %h/claude-usage-indicator/main.py
+Icon=utilities-system-monitor-symbolic
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
