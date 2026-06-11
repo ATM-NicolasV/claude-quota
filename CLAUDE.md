@@ -9,7 +9,8 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
 - `formatting.py` — pure presentation helpers (label, menu lines). No GTK, no IO.
 - `indicator.py` — GTK/AyatanaAppIndicator3 tray wiring + GLib refresh timer (threaded fetch).
 - `main.py` — entry point: config (`CLAUDE_USAGE_INTERVAL`), wiring, signal handling.
-- `install.sh` — per-user autostart install (copies the `.desktop` to `~/.config/autostart`).
+- `install.sh` — per-user autostart install (generates the `.desktop` with the
+  absolute app path into `~/.config/autostart`).
 - `build-deb.sh` — assemble and build the `.deb` (system install + `/etc/xdg/autostart`).
 
 ## Conventions
@@ -32,3 +33,7 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
   exits cleanly instead of a raw traceback. GTK imports are therefore lazy (inside
   `main()`), which also keeps `import main` GTK-free for tests.
 - Install the `.deb` with `apt install ./pkg.deb` (resolves deps), not `dpkg -i`.
+- `install.sh` writes the autostart `Exec` as an absolute path resolved at install
+  time. The Desktop Entry spec has no home-directory field code (only
+  `%f %F %u %U %i %c %k`), so a placeholder like `%h` is silently dropped by the
+  launcher and the entry fails to start — hence the path is generated, not shipped.
