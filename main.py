@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 import sys
+from pathlib import Path
 
 DEFAULT_INTERVAL = 60
 
@@ -42,6 +43,11 @@ def _read_interval() -> int:
     except ValueError:
         logging.warning("invalid CLAUDE_USAGE_INTERVAL=%r, using %d", raw, DEFAULT_INTERVAL)
         return DEFAULT_INTERVAL
+
+
+def _derive_label(config_dir: Path) -> str:
+    name = config_dir.name.lstrip(".").removeprefix("claude").lstrip("-")
+    return name or "Cl"
 
 
 def main() -> None:
