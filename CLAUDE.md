@@ -8,7 +8,8 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
   `/api/oauth/usage` endpoint, parse into a `Usage` dataclass. Network/IO + typed errors.
 - `formatting.py` — pure presentation helpers (label, menu lines). No GTK, no IO.
 - `indicator.py` — GTK/AyatanaAppIndicator3 tray wiring + GLib refresh timer (threaded fetch).
-- `main.py` — entry point: config (`CLAUDE_USAGE_INTERVAL`), wiring, signal handling.
+- `main.py` — entry point: config (`CLAUDE_USAGE_INTERVAL`, `CLAUDE_CONFIG_DIR`),
+  wiring, signal handling.
 - `install.sh` — per-user autostart install (generates the `.desktop` with the
   absolute app path into `~/.config/autostart`).
 - `build-deb.sh` — assemble and build the `.deb` (system install + `/etc/xdg/autostart`).
@@ -23,6 +24,25 @@ GNOME top-bar tray indicator showing the live Claude Code subscription quota
 - Tests: `python3 -m unittest discover -s tests -v`
 - Autostart (from source): `./install.sh`
 - Build .deb: `./build-deb.sh [version]` (uses only `dpkg-deb`; output is gitignored)
+
+## Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `CLAUDE_USAGE_INTERVAL` | `60` | Refresh interval in seconds (min 15). |
+| `CLAUDE_CONFIG_DIR` | `~/.claude` | Claude config directory to read credentials from. Set to a different path to track a second account. The tray label is derived from the directory name (e.g. `~/.claude-pro` → `pro`). |
+
+### Two-account setup
+
+Add aliases to `~/.bashrc`:
+
+```bash
+alias claude-perso='CLAUDE_CONFIG_DIR=$HOME/.claude-perso claude-usage-indicator'
+alias claude-pro='CLAUDE_CONFIG_DIR=$HOME/.claude-pro claude-usage-indicator'
+```
+
+Launch each alias once per session (or add both to autostart). Two tray icons appear,
+labelled `perso` and `pro` respectively.
 
 ## Notes
 - The usage endpoint is undocumented and may change without notice; the app degrades

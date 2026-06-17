@@ -26,16 +26,17 @@ ICON_NAME = "utilities-system-monitor-symbolic"
 class Indicator:
     """Tray indicator wiring a fetch callable to a GTK label + menu."""
 
-    def __init__(self, fetch: Callable[[], Usage], interval: int = 60):
+    def __init__(self, fetch: Callable[[], Usage], interval: int = 60, label: str = "Cl"):
         self._fetch = fetch
         self._interval = max(15, interval)
+        self._label = label
         self._last_usage: Optional[Usage] = None
 
         self._ind = AppIndicator.Indicator.new(
             INDICATOR_ID, ICON_NAME, AppIndicator.IndicatorCategory.SYSTEM_SERVICES
         )
         self._ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        self._ind.set_label("Cl …", "")
+        self._ind.set_label(f"{self._label} …", "")
 
         self._menu = Gtk.Menu()
         self._item_five = Gtk.MenuItem(label="Fenêtre 5h : …")
@@ -86,7 +87,7 @@ class Indicator:
     # --- UI updates (main thread only) --------------------------------------
     def _apply_usage(self, usage: Usage) -> bool:
         self._last_usage = usage
-        self._ind.set_label(format_label(usage), "")
+        self._ind.set_label(f"{self._label} {format_label(usage)}", "")
         lines = format_menu_lines(usage, datetime.now(timezone.utc))
         self._item_five.set_label(lines.five_hour)
         self._item_seven.set_label(lines.seven_day)
@@ -99,15 +100,15 @@ class Indicator:
 
     def _apply_error(self, exc: Exception) -> bool:
         if isinstance(exc, CredentialsError):
-            self._ind.set_label("Cl ⚠", "")
+            self._ind.set_label(f"{self._label} ⚠", "")
             self._item_five.set_label("credentials Claude introuvables")
         elif isinstance(exc, AuthError):
-            self._ind.set_label("Cl ⚠ auth", "")
+            self._ind.set_label(f"{self._label} ⚠ auth", "")
             self._item_five.set_label("lance Claude Code pour rafraîchir le token")
         else:
             # Network/unexpected: keep last known label if we have one.
             if self._last_usage is None:
-                self._ind.set_label("Cl ⚠", "")
+                self._ind.set_label(f"{self._label} ⚠", "")
             self._item_updated.set_label(f"hors-ligne — {datetime.now().strftime('%H:%M')}")
         logger.warning("usage fetch failed: %s", exc)
         return False

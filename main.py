@@ -45,6 +45,11 @@ def _read_interval() -> int:
         return DEFAULT_INTERVAL
 
 
+def _read_config_dir() -> Path:
+    raw = os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))
+    return Path(raw).expanduser()
+
+
 def _derive_label(config_dir: Path) -> str:
     name = config_dir.name.lstrip(".").removeprefix("claude").lstrip("-")
     return name or "Cl"
@@ -60,11 +65,16 @@ def main() -> None:
     # Imported lazily so the dependency check above can report a friendly
     # message before any GTK import would raise a raw traceback.
     from gi.repository import Gtk, GLib
+    import functools
     from indicator import Indicator
     from usage_client import fetch
 
     interval = _read_interval()
-    indicator = Indicator(fetch=fetch, interval=interval)
+    config_dir = _read_config_dir()
+    label = _derive_label(config_dir)
+    credentials_path = config_dir / ".credentials.json"
+    fetch_fn = functools.partial(fetch, credentials_path=credentials_path)
+    indicator = Indicator(fetch=fetch_fn, interval=interval, label=label)
     indicator.start()
 
     # Allow Ctrl-C / SIGTERM to quit the GTK loop cleanly.
