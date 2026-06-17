@@ -52,7 +52,7 @@ def _read_config_dir() -> Path:
 
 def _derive_label(config_dir: Path) -> str:
     name = config_dir.name.lstrip(".").removeprefix("claude").lstrip("-")
-    return name or "Cl"
+    return (name or "Cl").capitalize()
 
 
 def main() -> None:
